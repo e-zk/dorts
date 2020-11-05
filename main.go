@@ -9,14 +9,15 @@ import (
 	"text/template"
 )
 
+const defaultConfigDir = "{{ .xdgConfHome }}/dorts"
+const defaultConfigPath = "{{ .confDir }}/dorts.toml"
+
 var ignoredKeys = []string{"enabled", "path"}
 
 var config *toml.Tree
 var commonConfig map[string]string
 var dorts []string
-
-var path = "/home/zzz/etc/dorts/dorts.toml"
-var confDir = "/home/zzz/etc/dorts"
+var configDir string
 
 func keyIsIgnored(key string) bool {
 	for _, ignoredKey := range ignoredKeys {
@@ -40,10 +41,18 @@ func process(t *template.Template, vars interface{}) (string, error) {
 	return tmpBytes.String(), err
 }
 
+/* process template string */
+func processString(str string, vars interface{}) (string, error) {
+	tmp, err := template.New("tmp").Parse(str)
+	if err != nil {
+		return "", err
+	}
+
+	return process(tmp, vars)
+}
+
 /* process template file */
 func processFile(path string, vars interface{}) (string, error) {
-	var err error = nil
-
 	tmp, err := template.ParseFiles(path)
 	if err != nil {
 		return "", err
@@ -57,6 +66,44 @@ func subsPath(path string) string {
 	return strings.Replace(path, "~", os.Getenv("HOME"), 1)
 }
 
+func loadConfig() (*toml.Tree, error) {
+	var err error
+	var configPath string
+	var conf *toml.Tree
+	var vars = make(map[string]interface{})
+
+	homeDir := os.Getenv("HOME")
+
+	// set interface vars
+	vars["xdgConfHome"] = os.Getenv("XDG_CONFIG_HOME")
+	if !(len(vars["xdgConfHome"].(string)) > 0) {
+		vars["xdgConfHome"] = homeDir + "/.config"
+	}
+
+	// execute template on default config dir spec
+	configDir, err = processString(defaultConfigDir, vars)
+	if err != nil {
+		return conf, err
+	}
+
+	// use environment variable for config dir if it exists
+	dortsDirEnv := os.Getenv("DORTS_DIR")
+	if len(dortsDirEnv) > 0 {
+		configDir = os.Getenv("DORTS_DIR")
+	}
+
+	// set confdir var
+	vars["confDir"] = configDir
+
+	// execute tempalte on default config file spec
+	configPath, err = processString(defaultConfigPath, vars)
+	if err != nil {
+		return conf, err
+	}
+
+	return toml.LoadFile(configPath)
+}
+
 func main() {
 	// setup config vars
 	commonConfig = make(map[string]string)
@@ -65,7 +112,7 @@ func main() {
 	log.SetFlags(log.Lmsgprefix | log.Lshortfile)
 
 	// load config
-	config, err := toml.LoadFile(path)
+	config, err := loadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -93,7 +140,7 @@ func main() {
 	for _, dort := range dorts {
 		var outputPath string
 		vars := make(map[string]interface{})
-		templatePath := confDir + "/" + dort + ".tmpl"
+		templatePath := configDir + "/" + dort + ".tmpl"
 
 		// get dort-specific settings
 		dortConfig := config.Get(dort).(*toml.Tree)
@@ -146,8 +193,10 @@ func main() {
 			log.Fatal(err)
 		}
 
+		// write to file
 		f.WriteString(result)
 
+		// close file
 		if err := f.Close(); err != nil {
 			log.Fatal(err)
 		}
