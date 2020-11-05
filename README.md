@@ -26,8 +26,8 @@ accent = "#b00050"
 
 # program configuration
 [cwmrc]
-path = "~/.cwmrc" # output file path
-background = "#1f2a2a"     # override global 'background'
+path = "~/.cwmrc"         # output file path
+background = "#1f2a2a"    # override global 'background'
 gaps = "40 80 40 40"
 ```
 
