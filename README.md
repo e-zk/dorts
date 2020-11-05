@@ -54,7 +54,7 @@ gap 40 80 40 40
 
 # colors
 color menubg  "#101a1f"
-color font "  "#ffffff"
+color font    "#ffffff"
 color menufg  "#101a1f"
 color selfont "#b00050"
 
