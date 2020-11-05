@@ -53,9 +53,9 @@ After running `dorts`, the config file outputted to `~/.cwmrc` will look like:
 gap 40 80 40 40
 
 # colors
-color menubg  "#101a1f"
+color menubg  "#1f2a2a"
 color font    "#ffffff"
-color menufg  "#101a1f"
+color menufg  "#1f2a2a"
 color selfont "#b00050"
 
 # ... rest of config ...
