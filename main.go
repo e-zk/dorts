@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"github.com/pelletier/go-toml"
 	"log"
 	"os"
@@ -18,6 +19,7 @@ var config *toml.Tree
 var commonConfig map[string]string
 var dorts []string
 var configDir string
+var verbose bool
 
 func keyIsIgnored(key string) bool {
 	for _, ignoredKey := range ignoredKeys {
@@ -76,20 +78,25 @@ func loadConfig() (*toml.Tree, error) {
 
 	// set interface vars
 	vars["xdgConfHome"] = os.Getenv("XDG_CONFIG_HOME")
-	if !(len(vars["xdgConfHome"].(string)) > 0) {
+
+	// if XDG_CONFIG_HOME is empty, use $HOME/.config instead
+	if vars["xdgConfHome"].(string) == "" {
 		vars["xdgConfHome"] = homeDir + "/.config"
 	}
 
-	// execute template on default config dir spec
-	configDir, err = processString(defaultConfigDir, vars)
-	if err != nil {
-		return conf, err
-	}
+	// if the config dir is not already defined...
+	if configDir == "" {
+		// execute template on default config dir spec
+		configDir, err = processString(defaultConfigDir, vars)
+		if err != nil {
+			return conf, err
+		}
 
-	// use environment variable for config dir if it exists
-	dortsDirEnv := os.Getenv("DORTS_DIR")
-	if len(dortsDirEnv) > 0 {
-		configDir = os.Getenv("DORTS_DIR")
+		// use environment variable for config dir if it exists
+		dortsDirEnv := os.Getenv("DORTS_DIR")
+		if len(dortsDirEnv) > 0 {
+			configDir = os.Getenv("DORTS_DIR")
+		}
 	}
 
 	// set confdir var
@@ -104,12 +111,25 @@ func loadConfig() (*toml.Tree, error) {
 	return toml.LoadFile(configPath)
 }
 
+/* setup & parse command-line flags */
+func parseFlags() {
+	flag.StringVar(&configDir, "c", "", "path to config directory")
+	flag.BoolVar(&verbose, "v", false, "")
+	flag.Parse()
+
+	//if narg := len(os.Args) - flag.NArg(); narg < 1 {
+	//	log.Fatal("insufficient arguments given.")
+	//}
+}
+
 func main() {
 	// setup config vars
 	commonConfig = make(map[string]string)
 
 	// logging
 	log.SetFlags(log.Lmsgprefix | log.Lshortfile)
+
+	parseFlags()
 
 	// load config
 	config, err := loadConfig()
