@@ -1,13 +1,12 @@
 package main
 
 import (
-	"bytes"
 	"flag"
+	"github.com/e-zk/dorts/templates"
 	"github.com/pelletier/go-toml"
 	"log"
 	"os"
 	"strings"
-	"text/template"
 )
 
 const defaultConfigDir = "{{ .xdgConfHome }}/dorts"
@@ -30,42 +29,9 @@ func keyIsIgnored(key string) bool {
 	return false
 }
 
-/* process template string */
-func process(t *template.Template, vars interface{}) (string, error) {
-	var err error = nil
-	var tmpBytes bytes.Buffer
-
-	err = t.Execute(&tmpBytes, vars)
-	if err != nil {
-		return "", err
-	}
-
-	return tmpBytes.String(), err
-}
-
-/* process template string */
-func processString(str string, vars interface{}) (string, error) {
-	tmp, err := template.New("tmp").Parse(str)
-	if err != nil {
-		return "", err
-	}
-
-	return process(tmp, vars)
-}
-
-/* process template file */
-func processFile(path string, vars interface{}) (string, error) {
-	tmp, err := template.ParseFiles(path)
-	if err != nil {
-		return "", err
-	}
-
-	return process(tmp, vars)
-}
-
 /* substitute path with stuff */
-func subsPath(path string) string {
-	return strings.Replace(path, "~", os.Getenv("HOME"), 1)
+func subsPath(tmpPath string) string {
+	return strings.Replace(tmpPath, "~", os.Getenv("HOME"), 2)
 }
 
 func loadConfig() (*toml.Tree, error) {
@@ -87,14 +53,14 @@ func loadConfig() (*toml.Tree, error) {
 	// if the config dir is not already defined...
 	if configDir == "" {
 		// execute template on default config dir spec
-		configDir, err = processString(defaultConfigDir, vars)
+		configDir, err = templates.ProcessString(defaultConfigDir, vars)
 		if err != nil {
 			return conf, err
 		}
 
 		// use environment variable for config dir if it exists
 		dortsDirEnv := os.Getenv("DORTS_DIR")
-		if len(dortsDirEnv) > 0 {
+		if len(dortsDirEnv) > 1 {
 			configDir = os.Getenv("DORTS_DIR")
 		}
 	}
@@ -103,7 +69,7 @@ func loadConfig() (*toml.Tree, error) {
 	vars["confDir"] = configDir
 
 	// execute tempalte on default config file spec
-	configPath, err = processString(defaultConfigPath, vars)
+	configPath, err = templates.ProcessString(defaultConfigPath, vars)
 	if err != nil {
 		return conf, err
 	}
@@ -116,10 +82,6 @@ func parseFlags() {
 	flag.StringVar(&configDir, "c", "", "path to config directory")
 	flag.BoolVar(&verbose, "v", false, "")
 	flag.Parse()
-
-	//if narg := len(os.Args) - flag.NArg(); narg < 1 {
-	//	log.Fatal("insufficient arguments given.")
-	//}
 }
 
 func main() {
@@ -201,7 +163,7 @@ func main() {
 		}
 
 		// parse tempalte
-		result, err := processFile(templatePath, vars)
+		result, err := templates.ProcessFile(templatePath, vars)
 		if err != nil {
 			log.Println("error parsing template.")
 			log.Fatal(err)
