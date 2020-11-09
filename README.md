@@ -10,6 +10,18 @@ By default the config file and template files are stored in `${XDG_CONFIG_HOME}/
 * `${XDG_CONFIG_HOME}/dorts`; if `$XDG_CONFIG_HOME` is not defined, then
 * `${HOME}/.config/dorts`.
 
+## template functions
+
+### XrdbGrep
+Requires the `xrdb` command to be installed.  
+Extract from xrdb via regular expression. The given expression must match only ONE group, which is to be output. For example:
+
+```console
+some_config = "{{ XrdbGrep `\.color0:\t(.*)` }}"
+```
+
+The substituted value is the string of the matched group.
+
 ## example setup
 
 Take the following example config and template.
