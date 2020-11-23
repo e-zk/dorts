@@ -7,13 +7,15 @@ import (
 	"text/template"
 )
 
-func xrdbGrep(reg string) string {
+func xrdbValue(substr string) string {
 	xrdbCmd := exec.Command("xrdb", "-query")
 
 	output, err := xrdbCmd.Output()
 	if err != nil {
 		panic(err)
 	}
+
+	reg := substr + ":\t(.*)"
 
 	r := regexp.MustCompile(reg)
 	match := r.FindStringSubmatch(fmt.Sprintf("%s", output))
@@ -23,6 +25,6 @@ func xrdbGrep(reg string) string {
 
 func GetFuncs() template.FuncMap {
 	return template.FuncMap{
-		"XrdbGrep": xrdbGrep,
+		"XrdbValue": xrdbValue,
 	}
 }
