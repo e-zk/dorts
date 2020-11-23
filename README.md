@@ -12,15 +12,17 @@ By default the config file and template files are stored in `${XDG_CONFIG_HOME}/
 
 ## template functions
 
-### XrdbGrep
-Requires the `xrdb` command to be installed.  
-Extract from xrdb via regular expression. The given expression must match only ONE group, which is to be output. For example:
-
+### XrdbValue
+Requires the `xrdb` command to be installed. Extract value from X resource database.
+Usage: `{{ XrdbValue <key_regex> }}`.
+Example: 
 ```console
-some_config = "{{ XrdbGrep `\.color0:\t(.*)` }}"
+some_config = "{{ XrdbValue `\*\.color0` }}"
 ```
-
-The substituted value is the string of the matched group.
+After running, will substitute the value of X resource `*.color0`.
+```console
+some_config = "#1f1f1f"
+```
 
 ## example setup
 
