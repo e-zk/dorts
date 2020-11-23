@@ -60,7 +60,7 @@ color selfont "{{ .accent }}"
 # ... rest of config ...
 ```
 
-After running `dorts`, the config file outputted to `~/.cwmrc` will look like:
+After running `dorts`, the output file, `~/.cwmrc` will be:
 ```console
 
 # gaps
@@ -76,10 +76,9 @@ color selfont "#b00050"
 ```
 
 ## command-line usage
-Not implemented yet.
 
-run/execute templates:
+To run/execute templates:
 ```console
-$ dorts run
+$ dorts
 ```
 
