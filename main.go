@@ -125,7 +125,7 @@ func main() {
 	for _, dort := range dorts {
 		var (
 			outputPath   string
-			vars         = make(map[string]interface{})
+			vars         = make(map[string]string)
 			templatePath = configDir + "/" + dort + ".tmpl"
 		)
 
@@ -133,12 +133,11 @@ func main() {
 		dortConfig := config.Get(dort).(*toml.Tree)
 
 		// skip disabled dorts
+		// and skip ones without a template file
 		if dortConfig.Has("enabled") && dortConfig.Get("enabled").(bool) == false {
 			log.Printf("dort `%s' is disabled. skipping.\n", dort)
 			continue
 		}
-
-		// skip dorts without a template file
 		if _, err := os.Stat(templatePath); os.IsNotExist(err) {
 			log.Printf("template for dort `%s' does not exist. skipping.\n", dort)
 			continue
@@ -153,9 +152,7 @@ func main() {
 		}
 
 		// add global variables to template vars
-		for k, v := range commonConfig {
-			vars[k] = v
-		}
+		vars = commonConfig
 
 		// add 'local' keys to template vars
 		// (this overrides global settings)
@@ -173,13 +170,11 @@ func main() {
 		}
 
 		// write to output file
-		f, err := os.OpenFile(outputPath, os.O_RDWR|os.O_CREATE, 00644)
+		f, err := os.OpenFile(outputPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 00644)
 		if err != nil {
 			log.Fatal(err)
 		}
-
 		f.WriteString(result)
-
 		if err := f.Close(); err != nil {
 			log.Fatal(err)
 		}
